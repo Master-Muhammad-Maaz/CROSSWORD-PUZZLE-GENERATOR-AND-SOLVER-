@@ -34,7 +34,7 @@ export default function Crossword() {
         }
       }
     }
-    setStatus(isCorrect ? "✅ Perfect! Sab sahi hai." : "❌ Kuch galat hai, phir se check karein.");
+   setStatus(isCorrect ? "✨ Amazing! You nailed it." : "⚠️ Almost there! Check your letters again.");
   };
 
   return (
