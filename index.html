@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crossword Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex flex-col items-center p-10">
+    <h1 class="text-3xl font-bold mb-5 text-blue-600">Crossword Puzzle</h1>
+    <div id="grid" class="grid grid-cols-5 gap-1 bg-gray-400 p-1 border-2 border-gray-600"></div>
+    <button onclick="checkResult()" class="mt-5 px-6 py-2 bg-green-500 text-white rounded-full font-bold">Check Solution</button>
+    <p id="status" class="mt-4 font-semibold text-lg text-red-500"></p>
+
+    <script>
+        const answerKey = [['R','E','A','C','T'],['','','','O',''],['','','','D',''],['','','','E',''],['','','','','']];
+        const gridDiv = document.getElementById('grid');
+
+        for(let r=0; r<5; r++) {
+            for(let c=0; c<5; c++) {
+                const input = document.createElement('input');
+                input.maxLength = 1;
+                input.className = "w-12 h-12 text-center text-xl font-bold uppercase outline-none " + (answerKey[r][c] === '' ? 'bg-gray-800' : 'bg-white');
+                if(answerKey[r][c] === '') input.disabled = true;
+                input.id = `cell-${r}-${c}`;
+                gridDiv.appendChild(input);
+            }
+        }
+
+        function checkResult() {
+            let correct = true;
+            for(let r=0; r<5; r++) {
+                for(let c=0; c<5; c++) {
+                    if(answerKey[r][c] !== '' && document.getElementById(`cell-${r}-${c}`).value.toUpperCase() !== answerKey[r][c]) {
+                        correct = false;
+                    }
+                }
+            }
+            document.getElementById('status').innerText = correct ? "✅ Perfect! Sab Sahi Hai." : "❌ Kuch Galat Hai!";
+        }
+    </script>
+</body>
+</html>
