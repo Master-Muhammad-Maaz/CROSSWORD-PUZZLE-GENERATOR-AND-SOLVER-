@@ -2,41 +2,128 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Crossword Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Crossword Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .cell-input { transition: all 0.2s ease; }
+        .cell-input:focus { transform: scale(1.1); z-index: 10; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        .correct { background-color: #10b981 !important; color: white; animation: pop 0.3s ease; }
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+    </style>
 </head>
-<body class="bg-gray-100 flex flex-col items-center p-10">
-    <h1 class="text-3xl font-bold mb-5 text-blue-600">Crossword Puzzle</h1>
-    <div id="grid" class="grid grid-cols-5 gap-1 bg-gray-400 p-1 border-2 border-gray-600"></div>
-    <button onclick="checkResult()" class="mt-5 px-6 py-2 bg-green-500 text-white rounded-full font-bold">Check Solution</button>
-    <p id="status" class="mt-4 font-semibold text-lg text-red-500"></p>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center p-5 font-sans">
+
+    <div class="max-w-2xl w-full text-center">
+        <h1 class="text-4xl font-extrabold mb-2 bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+            Crossword Pro
+        </h1>
+        <p class="text-slate-400 mb-8 text-sm uppercase tracking-widest">Random Puzzle Solver</p>
+
+        <div id="grid-container" class="inline-grid gap-1 p-2 bg-slate-800 rounded-xl shadow-2xl border border-slate-700">
+            </div>
+
+        <div class="mt-8 bg-slate-800 p-6 rounded-xl border border-slate-700 text-left shadow-lg">
+            <h3 class="text-emerald-400 font-bold mb-3 border-b border-slate-700 pb-2 flex items-center">
+                <span class="mr-2">📝</span> Word Hints (Find these!)
+            </h3>
+            <div id="hints-list" class="space-y-2 text-slate-300 italic">
+                </div>
+        </div>
+
+        <div class="mt-8 flex gap-4 justify-center">
+            <button onclick="checkPuzzle()" class="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-bold transition-all shadow-lg active:scale-95">
+                Check Solution
+            </button>
+            <button onclick="location.reload()" class="px-8 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg font-bold transition-all border border-slate-600">
+                New Puzzle
+            </button>
+        </div>
+        <p id="message" class="mt-6 text-xl font-medium"></p>
+    </div>
 
     <script>
-        const answerKey = [['R','E','A','C','T'],['','','','O',''],['','','','D',''],['','','','E',''],['','','','','']];
-        const gridDiv = document.getElementById('grid');
+        // Your provided word list
+        const wordList = ["APPLE", "RIVER", "CHAIR", "TABLE", "LIGHT", "TRAIN", "BREAD", "SMILE", "CLOCK", "PLANT", "OCEAN", "TIGER", "HORSE", "EAGLE", "SHARK", "VALLEY", "BRIDGE", "GARDEN", "SCHOOL", "PENCIL", "MOUSE", "MOBILE", "CAMERA", "MIRROR", "COFFEE", "PIZZA", "CANDY", "WATER", "DANCE", "MOVIE", "STORY", "DREAM", "SLEEP", "SUMMER", "WINTER"];
 
-        for(let r=0; r<5; r++) {
-            for(let c=0; c<5; c++) {
-                const input = document.createElement('input');
-                input.maxLength = 1;
-                input.className = "w-12 h-12 text-center text-xl font-bold uppercase outline-none " + (answerKey[r][c] === '' ? 'bg-gray-800' : 'bg-white');
-                if(answerKey[r][c] === '') input.disabled = true;
-                input.id = `cell-${r}-${c}`;
-                gridDiv.appendChild(input);
+        const GRID_SIZE = 8;
+        let selectedWords = [];
+        let gridData = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(''));
+
+        function initGame() {
+            // Pick 3-4 random words
+            selectedWords = [...wordList].sort(() => 0.5 - Math.random()).slice(0, 4);
+            
+            // Simple placement (One per row for demo simplicity, but looks professional)
+            selectedWords.forEach((word, index) => {
+                let row = index * 2;
+                let startCol = Math.floor((GRID_SIZE - word.length) / 2);
+                for(let i=0; i<word.length; i++) {
+                    gridData[row][startCol + i] = word[i];
+                }
+            });
+
+            renderGrid();
+            renderHints();
+        }
+
+        function renderGrid() {
+            const container = document.getElementById('grid-container');
+            container.style.gridTemplateColumns = `repeat(${GRID_SIZE}, minmax(0, 1fr))`;
+            
+            for(let r=0; r<GRID_SIZE; r++) {
+                for(let c=0; c<GRID_SIZE; c++) {
+                    const input = document.createElement('input');
+                    input.maxLength = 1;
+                    const isActive = gridData[r][c] !== '';
+                    
+                    input.className = `w-10 h-10 sm:w-12 sm:h-12 text-center text-xl font-bold uppercase outline-none rounded-md cell-input 
+                        ${isActive ? 'bg-white text-slate-900 border-2 border-slate-600' : 'bg-slate-700/30 cursor-not-allowed opacity-20'}`;
+                    
+                    if(!isActive) input.disabled = true;
+                    input.id = `c-${r}-${c}`;
+                    
+                    // Auto-focus next logic
+                    input.addEventListener('input', (e) => {
+                        if(e.target.value && c < GRID_SIZE - 1) {
+                            const next = document.getElementById(`c-${r}-${c+1}`);
+                            if(next && !next.disabled) next.focus();
+                        }
+                    });
+
+                    container.appendChild(input);
+                }
             }
         }
 
-        function checkResult() {
-            let correct = true;
-            for(let r=0; r<5; r++) {
-                for(let c=0; c<5; c++) {
-                    if(answerKey[r][c] !== '' && document.getElementById(`cell-${r}-${c}`).value.toUpperCase() !== answerKey[r][c]) {
-                        correct = false;
+        function renderHints() {
+            const hintsDiv = document.getElementById('hints-list');
+            selectedWords.forEach(word => {
+                const scrambled = word.split('').sort(() => 0.5 - Math.random()).join('');
+                hintsDiv.innerHTML += `<div>• Unscramble this: <span class="text-blue-400 font-mono font-bold">${scrambled}</span></div>`;
+            });
+        }
+
+        function checkPuzzle() {
+            let allCorrect = true;
+            for(let r=0; r<GRID_SIZE; r++) {
+                for(let c=0; c<GRID_SIZE; c++) {
+                    if(gridData[r][c] !== '') {
+                        const val = document.getElementById(`c-${r}-${c}`).value.toUpperCase();
+                        if(val === gridData[r][c]) {
+                            document.getElementById(`c-${r}-${c}`).classList.add('correct');
+                        } else {
+                            allCorrect = false;
+                        }
                     }
                 }
             }
-            document.getElementById('status').innerText = correct ? "✅ Perfect! Sab Sahi Hai." : "❌ Kuch Galat Hai!";
+            const msg = document.getElementById('message');
+            msg.innerText = allCorrect ? "✨ Brilliantly Solved!" : "❌ Some letters are missing or wrong!";
+            msg.className = allCorrect ? "mt-6 text-xl font-bold text-emerald-400" : "mt-6 text-xl font-bold text-rose-400";
         }
+
+        initGame();
     </script>
 </body>
 </html>
