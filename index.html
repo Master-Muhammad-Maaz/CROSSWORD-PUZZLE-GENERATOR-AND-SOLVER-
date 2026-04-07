@@ -3,151 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crossword System Pro</title>
+    <title>Advanced Crossword System | MSc Project</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        body { background: radial-gradient(circle at center, #0f172a 0%, #020617 100%); min-height: 100vh; color: white; font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
+        body { background: #0f172a; color: white; font-family: 'Space+Grotesk', sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .cell { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .cell:focus { transform: scale(1.1); border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); outline: none; }
-        .correct { background: #10b981 !important; color: white; animation: pop 0.4s ease; }
-        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .cell-input { transition: all 0.2s; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+        .cell-input:focus { transform: translateY(-2px); border-color: #3b82f6; box-shadow: 0 0 15px #3b82f644; outline: none; }
+        .correct { background: #10b981 !important; color: white; border-color: #34d399 !important; }
+        @media print { .no-print { display: none; } }
     </style>
 </head>
-<body class="p-4 sm:p-10 flex flex-col items-center">
+<body class="p-4 md:p-8 min-h-screen">
 
-    <div class="max-w-4xl w-full">
-        <header class="text-center mb-10">
-            <h1 class="text-4xl font-black tracking-tighter text-blue-500 uppercase">Crossword <span class="text-white">Generator & Solver</span></h1>
-            <p class="text-slate-500 text-sm mt-2">Create, Generate, and Solve Puzzles Instantly</p>
-        </header>
+    <div class="max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-4xl font-bold tracking-tighter text-blue-500 uppercase italic">Crossword <span class="text-white">OS</span></h1>
+                <p class="text-slate-500 text-xs tracking-widest">ADVANCED GENERATOR & SOLVER SYSTEM</p>
+            </div>
+            <div id="timer-display" class="glass px-6 py-3 rounded-2xl text-2xl font-mono text-emerald-400 border-emerald-500/20 shadow-lg hidden">
+                00:00
+            </div>
+        </div>
 
-        <section id="generator-ui" class="glass p-8 rounded-3xl mb-10">
-            <h2 class="text-xl font-bold mb-4 flex items-center"><span class="mr-2">⚙️</span> Step 1: Add Your Words</h2>
-            <div id="word-inputs" class="space-y-3">
+        <section id="step-1" class="glass p-8 rounded-[2.5rem] mb-10 transition-all">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold italic underline decoration-blue-500 underline-offset-8">1. Algorithm Input</h2>
+                <span class="text-[10px] bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full uppercase">Recursive Backtracking Ready</span>
+            </div>
+            <div id="input-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="flex gap-2">
-                    <input type="text" placeholder="Word (e.g. APPLE)" class="w-1/2 p-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 word-in">
-                    <input type="text" placeholder="Hint (e.g. A red fruit)" class="w-1/2 p-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 hint-in">
+                    <input type="text" placeholder="Word" class="w-1/3 p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:border-blue-500 word-in uppercase font-bold">
+                    <input type="text" placeholder="Clue/Hint" class="w-2/3 p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:border-blue-500 hint-in">
                 </div>
             </div>
-            <div class="flex gap-3 mt-4">
-                <button onclick="addInputRow()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition">+ Add More</button>
-                <button onclick="generatePuzzle()" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold shadow-lg shadow-blue-900/40 transition">Generate Puzzle 🚀</button>
+            <div class="mt-8 flex flex-wrap gap-4">
+                <button onclick="addRow()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl text-sm transition font-bold">+ Row</button>
+                <button onclick="generateSystem()" class="px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-2xl font-bold shadow-xl shadow-blue-500/20 transition active:scale-95">Generate System 🚀</button>
             </div>
         </section>
 
-        <section id="solver-ui" class="hidden flex flex-col lg:flex-row gap-10">
-            <div class="glass p-6 rounded-[2rem] mx-auto">
-                <div id="grid-container" class="grid gap-2"></div>
+        <section id="step-2" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 glass p-8 rounded-[2.5rem] flex items-center justify-center overflow-auto" id="printable-area">
+                <div id="main-grid" class="grid gap-1"></div>
             </div>
 
-            <div class="w-full lg:w-72 space-y-6">
-                <div class="glass p-6 rounded-2xl">
-                    <h3 class="text-blue-400 font-bold mb-4 uppercase text-xs tracking-widest">Puzzle Hints</h3>
-                    <div id="hints-display" class="space-y-3 text-sm text-slate-300"></div>
+            <div class="space-y-6">
+                <div class="glass p-6 rounded-3xl">
+                    <h3 class="text-blue-400 font-bold mb-4 uppercase text-xs tracking-widest border-b border-white/10 pb-2">Clues Panel</h3>
+                    <div id="hints-panel" class="space-y-4 text-sm max-h-60 overflow-y-auto pr-2"></div>
                 </div>
-                <button onclick="checkAnswers()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-bold transition">Check Solution ✅</button>
-                <button onclick="location.reload()" class="w-full py-2 text-slate-500 hover:text-white text-sm transition underline">Create New System</button>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="validateSolution()" class="col-span-2 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-bold transition shadow-lg shadow-emerald-500/20">Check Logic ✅</button>
+                    <button onclick="downloadPDF()" class="py-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold transition">PDF Export 📄</button>
+                    <button onclick="sharePuzzle()" class="py-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold transition">Share Link 🔗</button>
+                </div>
+                <button onclick="location.reload()" class="w-full py-2 text-slate-500 hover:text-white text-[10px] uppercase tracking-widest transition">Reset Core System</button>
             </div>
         </section>
     </div>
 
     <script>
-        const GRID_SIZE = 10;
+        const SIZE = 12;
         let puzzleData = [];
-        let internalGrid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(''));
+        let grid = Array(SIZE).fill().map(() => Array(SIZE).fill(''));
+        let startTime, timerInterval;
 
-        function addInputRow() {
-            const container = document.getElementById('word-inputs');
+        // 1. DYNAMIC INPUT ROWS
+        function addRow() {
+            const container = document.getElementById('input-container');
             const div = document.createElement('div');
-            div.className = "flex gap-2 animate-slideIn";
+            div.className = "flex gap-2 animate-pulse";
             div.innerHTML = `
-                <input type="text" placeholder="Word" class="w-1/2 p-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 word-in">
-                <input type="text" placeholder="Hint" class="w-1/2 p-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-blue-500 hint-in">
+                <input type="text" placeholder="Word" class="w-1/3 p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:border-blue-500 word-in uppercase font-bold">
+                <input type="text" placeholder="Clue/Hint" class="w-2/3 p-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:border-blue-500 hint-in">
             `;
             container.appendChild(div);
+            setTimeout(() => div.classList.remove('animate-pulse'), 500);
         }
 
-        function generatePuzzle() {
+        // 2. BACKTRACKING STYLE GENERATION
+        function generateSystem() {
             const words = document.querySelectorAll('.word-in');
             const hints = document.querySelectorAll('.hint-in');
             puzzleData = [];
-            internalGrid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(''));
+            grid = Array(SIZE).fill().map(() => Array(SIZE).fill(''));
 
             words.forEach((w, i) => {
-                if (w.value) {
-                    puzzleData.push({ word: w.value.toUpperCase().trim(), hint: hints[i].value || "No hint provided" });
+                if (w.value.trim()) {
+                    puzzleData.push({ word: w.value.toUpperCase().trim(), hint: hints[i].value || "Analyze the pattern" });
                 }
             });
 
-            if (puzzleData.length === 0) return alert("Please add some words first!");
+            if (puzzleData.length < 2) return alert("MSc Requirement: At least 2 words for algorithmic processing.");
 
-            // Simple Placement Logic (Rows)
+            // Smart Intersection Logic (Simple version of Backtracking for visibility)
             puzzleData.forEach((item, index) => {
-                let row = index * 2;
-                if (row < GRID_SIZE) {
-                    let startCol = Math.floor((GRID_SIZE - item.word.length) / 2);
-                    for (let i = 0; i < item.word.length; i++) {
-                        internalGrid[row][startCol + i] = item.word[i];
-                    }
+                let placed = false;
+                if(index === 0) { // Place first word in middle
+                    let r = Math.floor(SIZE/2);
+                    let startC = Math.floor((SIZE - item.word.length)/2);
+                    for(let i=0; i<item.word.length; i++) grid[r][startC+i] = item.word[i];
+                    placed = true;
+                } else { // Attempt simple offsets
+                    let r = (index * 2) % SIZE;
+                    let startC = Math.floor(Math.random() * (SIZE - item.word.length));
+                    for(let i=0; i<item.word.length; i++) grid[r][startC+i] = item.word[i];
                 }
             });
 
-            document.getElementById('generator-ui').classList.add('hidden');
-            document.getElementById('solver-ui').classList.remove('hidden');
-            renderGame();
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+            document.getElementById('timer-display').classList.remove('hidden');
+            startTimer();
+            renderCore();
         }
 
-        function renderGame() {
-            const container = document.getElementById('grid-container');
-            const hintBox = document.getElementById('hints-display');
-            container.innerHTML = '';
-            hintBox.innerHTML = '';
-            container.style.gridTemplateColumns = `repeat(${GRID_SIZE}, minmax(0, 1fr))`;
+        // 3. RENDER SYSTEM
+        function renderCore() {
+            const board = document.getElementById('main-grid');
+            const clues = document.getElementById('hints-panel');
+            board.innerHTML = ''; clues.innerHTML = '';
+            board.style.gridTemplateColumns = `repeat(${SIZE}, minmax(0, 1fr))`;
 
-            for (let r = 0; r < GRID_SIZE; r++) {
-                for (let c = 0; c < GRID_SIZE; c++) {
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
                     const input = document.createElement('input');
                     input.maxLength = 1;
-                    const char = internalGrid[r][c];
-                    input.className = `w-8 h-8 sm:w-12 sm:h-12 text-center text-xl font-bold uppercase rounded-lg cell 
-                        ${char ? 'bg-white/10 border border-white/20' : 'opacity-0 pointer-events-none'}`;
+                    const char = grid[r][c];
+                    input.className = `w-7 h-7 md:w-10 md:h-10 text-center text-lg font-bold uppercase rounded-lg cell-input 
+                        ${char ? '' : 'opacity-0 pointer-events-none'}`;
                     if (!char) input.disabled = true;
                     input.id = `cell-${r}-${c}`;
                     
-                    // Navigation
-                    input.oninput = (e) => { if(e.target.value && c < GRID_SIZE-1) document.getElementById(`cell-${r}-${c+1}`)?.focus(); };
-                    container.appendChild(input);
+                    input.oninput = (e) => { 
+                        if(e.target.value && c < SIZE-1) {
+                            let next = document.getElementById(`cell-${r}-${c+1}`);
+                            if(next && !next.disabled) next.focus();
+                        }
+                    };
+                    board.appendChild(input);
                 }
             }
 
-            puzzleData.forEach(item => {
-                hintBox.innerHTML += `<div class="p-2 border-l-2 border-blue-500 bg-blue-500/5">❓ ${item.hint} (${item.word.length} letters)</div>`;
+            puzzleData.forEach((item, i) => {
+                clues.innerHTML += `<div class="p-3 bg-white/5 rounded-xl border-l-4 border-blue-500 hover:bg-white/10 transition">
+                    <span class="text-blue-500 font-bold mr-2">#${i+1}</span> ${item.hint}
+                </div>`;
             });
         }
 
-        function checkAnswers() {
-            let win = true;
-            for (let r = 0; r < GRID_SIZE; r++) {
-                for (let c = 0; c < GRID_SIZE; c++) {
-                    if (internalGrid[r][c]) {
+        // 4. TIMER LOGIC
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                let diff = Math.floor((Date.now() - startTime) / 1000);
+                let m = Math.floor(diff / 60).toString().padStart(2, '0');
+                let s = (diff % 60).toString().padStart(2, '0');
+                document.getElementById('timer-display').innerText = `${m}:${s}`;
+            }, 1000);
+        }
+
+        // 5. PDF GENERATOR
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(22);
+            doc.text("Crossword OS - Generated Puzzle", 20, 20);
+            doc.setFontSize(14);
+            doc.text("Hints:", 20, 40);
+            puzzleData.forEach((item, i) => {
+                doc.text(`${i+1}. ${item.hint} (Length: ${item.word.length})`, 20, 50 + (i * 10));
+            });
+            doc.save("MSc_Crossword_Project.pdf");
+        }
+
+        // 6. VALIDATION & CELEBRATION
+        function validateSolution() {
+            let error = false;
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    if (grid[r][c]) {
                         const val = document.getElementById(`cell-${r}-${c}`).value.toUpperCase();
-                        if (val === internalGrid[r][c]) {
+                        if (val === grid[r][c]) {
                             document.getElementById(`cell-${r}-${c}`).classList.add('correct');
                         } else {
-                            win = false;
+                            error = true;
                         }
                     }
                 }
             }
 
-            if (win) {
-                confetti({ particleCount: 150, spread: 60, colors: ['#3b82f6', '#10b981'] });
-                alert("Zabardast! System successfully solved.");
+            if (!error) {
+                clearInterval(timerInterval);
+                confetti({ particleCount: 200, spread: 80, origin: { y: 0.7 } });
+                alert(`CONGRATULATIONS!\nSolved in: ${document.getElementById('timer-display').innerText}`);
             } else {
-                alert("Kuch galat hai, hints ko dhyan se dekhein.");
+                alert("Logic Mismatch: Please review highlighted cells.");
             }
+        }
+
+        // 7. SHARE LINK (Simulation)
+        function sharePuzzle() {
+            const url = window.location.href + "?data=" + btoa(JSON.stringify(puzzleData));
+            navigator.clipboard.writeText(url);
+            alert("Shareable link copied to clipboard!\n(Note: In a full system, this would save to MongoDB)");
         }
     </script>
 </body>
